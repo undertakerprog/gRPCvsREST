@@ -9,6 +9,7 @@ import (
 
 	"gRPCvsREST/api/proto/todopb"
 	"gRPCvsREST/internal/todo"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -25,7 +26,7 @@ func NewServer(svc *todo.Service) *grpc.Server {
 	return server
 }
 
-func (h *Handler) CreateTodo(ctx context.Context, req *todopb.CreateTodoRequest) (*todopb.Todo, error) {
+func (h *Handler) CreateTodo(_ context.Context, req *todopb.CreateTodoRequest) (*todopb.Todo, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "missing request")
 	}
@@ -46,7 +47,7 @@ func (h *Handler) CreateTodo(ctx context.Context, req *todopb.CreateTodoRequest)
 	return resp, nil
 }
 
-func (h *Handler) GetTodo(ctx context.Context, req *todopb.GetTodoRequest) (*todopb.Todo, error) {
+func (h *Handler) GetTodo(_ context.Context, req *todopb.GetTodoRequest) (*todopb.Todo, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "missing request")
 	}
@@ -59,7 +60,7 @@ func (h *Handler) GetTodo(ctx context.Context, req *todopb.GetTodoRequest) (*tod
 	return toProto(item), nil
 }
 
-func (h *Handler) ListTodos(ctx context.Context, req *todopb.ListTodosRequest) (*todopb.ListTodosResponse, error) {
+func (h *Handler) ListTodos(_ context.Context, req *todopb.ListTodosRequest) (*todopb.ListTodosResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "missing request")
 	}

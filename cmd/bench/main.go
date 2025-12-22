@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"gRPCvsREST/api/proto/todopb"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/proto"
@@ -75,7 +76,7 @@ func main() {
 			if err != nil {
 				return 0, err
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != http.StatusOK {
 				return 0, fmt.Errorf("unexpected status: %s", resp.Status)
@@ -88,7 +89,7 @@ func main() {
 			return len(body), nil
 		}
 	case "grpc":
-		conn, err := grpc.Dial(*grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(*grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Fatalf("grpc dial error: %v", err)
 		}
