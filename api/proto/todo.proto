@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package todo;
+
+option go_package = "gRPCvsREST/api/proto/todopb;todopb";
+
+message Todo {
+  int64 id = 1;
+  string title = 2;
+  bool done = 3;
+  int64 created_at = 4;
+  string payload = 5;
+}
+
+message CreateTodoRequest {
+  string title = 1;
+  bool done = 2;
+  int32 payload_kb = 3;
+}
+
+message GetTodoRequest {
+  int64 id = 1;
+}
+
+message ListTodosRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+  int32 payload_kb = 3;
+}
+
+message ListTodosResponse {
+  repeated Todo items = 1;
+}
+
+service TodoService {
+  rpc CreateTodo(CreateTodoRequest) returns (Todo);
+  rpc GetTodo(GetTodoRequest) returns (Todo);
+  rpc ListTodos(ListTodosRequest) returns (ListTodosResponse);
+}
