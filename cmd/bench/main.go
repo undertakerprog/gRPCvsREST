@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -43,6 +45,7 @@ func main() {
 		conc      = flag.Int("c", 50, "concurrency")
 		payloadKB = flag.Int("payload_kb", 32, "payload size in KB")
 		limit     = flag.Int("limit", 100, "ListTodos limit")
+		seedCount = flag.Int("seed", 0, "seed todos via REST before benchmark")
 	)
 	flag.Parse()
 
@@ -121,6 +124,13 @@ func main() {
 
 	if cleanup != nil {
 		defer cleanup()
+	}
+
+	if *seedCount > 0 {
+		fmt.Printf("seed: %d todos\n", *seedCount)
+		if err := seedTodos(*baseURL, *seedCount); err != nil {
+			log.Fatalf("seed error: %v", err)
+		}
 	}
 
 	warmupN := warmupRequests
@@ -242,5 +252,64 @@ func buildRestURL(base string, limit, payloadKB int) (string, error) {
 	query.Set("offset", "0")
 	query.Set("payload_kb", fmt.Sprintf("%d", payloadKB))
 	parsed.RawQuery = query.Encode()
+	return parsed.String(), nil
+}
+
+type seedTodoRequest struct {
+	Title string `json:"title"`
+	Done  bool   `json:"done"`
+}
+
+func seedTodos(base string, count int) error {
+	endpoint, err := buildRestEndpoint(base, "/todos")
+	if err != nil {
+		return err
+	}
+
+	client := &http.Client{}
+	for i := 0; i < count; i++ {
+		payload, err := json.Marshal(seedTodoRequest{
+			Title: fmt.Sprintf("seed-%d", i+1),
+			Done:  false,
+		})
+		if err != nil {
+			return err
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(payload))
+		if err != nil {
+			cancel()
+			return err
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			cancel()
+			return err
+		}
+		_, _ = io.Copy(io.Discard, resp.Body)
+		_ = resp.Body.Close()
+		cancel()
+
+		if resp.StatusCode != http.StatusCreated {
+			return fmt.Errorf("seed status: %s", resp.Status)
+		}
+	}
+
+	return nil
+}
+
+func buildRestEndpoint(base, path string) (string, error) {
+	parsed, err := url.Parse(base)
+	if err != nil {
+		return "", err
+	}
+	if parsed.Scheme == "" {
+		return "", errors.New("base must include scheme")
+	}
+	parsed.Path = strings.TrimRight(parsed.Path, "/") + path
+	parsed.RawQuery = ""
 	return parsed.String(), nil
 }

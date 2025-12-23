@@ -85,12 +85,12 @@ grpcurl -plaintext -import-path api/proto -proto todo.proto localhost:9090 todo.
 
 REST:
 ```
-go run ./cmd/bench --mode=rest --base=http://localhost:8080 --n=20000 --c=50 --payload_kb=32 --limit=100
+go run ./cmd/bench --mode=rest --base=http://localhost:8080 --n=20000 --c=50 --payload_kb=32 --limit=100 --seed=100
 ```
 
 gRPC:
 ```
-go run ./cmd/bench --mode=grpc --grpc=localhost:9090 --n=20000 --c=50 --payload_kb=32 --limit=100
+go run ./cmd/bench --mode=grpc --grpc=localhost:9090 --n=20000 --c=50 --payload_kb=32 --limit=100 --seed=100
 ```
 
 Метрики:
@@ -99,6 +99,8 @@ go run ./cmd/bench --mode=grpc --grpc=localhost:9090 --n=20000 --c=50 --payload_
 - bytes: REST = `len(body)`, gRPC = `len(proto.Marshal(response))`
 
 Честное сравнение: прогрев + несколько прогонов, одинаковые параметры (`n`, `c`, `payload_kb`, `limit`).
+
+`--seed` создает `N` todo через REST перед прогоном, чтобы `ListTodos` возвращал реальные данные.
 
 ## Рекомендуемые прогоны и что обычно наблюдается
 
